@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CamairConnect.com MA - Cameroon Events & Vendors</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--green:#009A44;--red:#CE1126;--yellow:#FCD116}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto;background:radial-gradient(1200px 600px at 10% -10%, rgba(0,154,68,0.26), transparent 60%),radial-gradient(900px 500px at 90% 0%, rgba(252,209,22,0.31), transparent 60%),radial-gradient(800px 600px at 50% 120%, rgba(206,17,38,0.20), transparent 60%),linear-gradient(180deg, #f3f7f3 0%, #f7f2e2 100%);min-height:100vh}
+.cameroon-bar{height:12px;background:linear-gradient(90deg,var(--green) 0%,var(--green) 33%,var(--yellow) 33%,var(--yellow) 66%,var(--red) 66%,var(--red) 100%);box-shadow:0 6px 18px rgba(0,0,0,0.25),0 0 20px rgba(0,154,68,0.15);position:sticky;top:0;z-index:100;border-bottom:2px solid rgba(0,0,0,0.1)}
+.glass-card{background:rgba(255,255,255,0.88);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.6)}
+.hero-pattern{background-image:radial-gradient(circle at 1px 1px, rgba(0,0,0,0.04) 1px, transparent 0);background-size:24px 24px}
+.dropdown-menu{animation:fadeIn 0.15s ease-out}@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+.line-clamp-1{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.compact-img{height:92px;object-fit:cover}
+@media(min-width:640px){.compact-img{height:110px}}
+@media(max-width:640px){#app{padding:10px}header.glass-card{padding:12px !important}}
+.expand-anim{animation:expandIn 0.22s ease-out}@keyframes expandIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body class="min-h-screen hero-pattern">
+<div class="cameroon-bar"></div>
+<div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+  <div class="absolute w-[500px] h-[500px] rounded-full bg-green-200 blur-[80px] opacity-85 -top-48 -left-32"></div>
+  <div class="absolute w-[600px] h-[600px] rounded-full bg-yellow-200 blur-[90px] opacity-85 -top-20 right-0"></div>
+  <div class="absolute w-[700px] h-[700px] rounded-full bg-red-100 blur-[100px] opacity-70 bottom-0 left-1/3"></div>
+</div>
+
+<div id="app" class="max-w-5xl mx-auto p-3 sm:p-4 relative">
+  <header class="glass-card rounded-2xl shadow p-3 sm:p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 sm:mb-5 relative z-20">
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center text-white font-black shadow text-[12px] sm:text-[13px] flex-shrink-0">MA</div>
+      <div class="min-w-0"><h1 class="text-[20px] sm:text-2xl font-black tracking-tight truncate"><span style="color:#009A44">Camair</span><span style="color:#FCD116">Connect</span><span style="color:#CE1126">.com</span></h1><p class="text-[9px] sm:text-[11px] text-gray-500 font-semibold tracking-widest uppercase truncate">Massachusetts • Cameroon Community • Cloud • MA</p></div>
+    </div>
+    <div class="flex gap-2 items-center w-full sm:w-auto justify-between sm:justify-end">
+      <div id="loggedOutBtns" class="flex gap-2 flex-1 sm:flex-initial"><button onclick="openLogin()" class="flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 bg-white border rounded-full text-sm font-bold">Login</button><button onclick="openSignup()" class="flex-1 sm:flex-initial px-5 py-2.5 sm:py-2 bg-green-600 text-white rounded-full text-sm font-bold">Sign Up</button></div>
+      <div id="loggedInBtns" class="hidden flex gap-2 items-center flex-1 sm:flex-initial"><span id="userDisplay" class="flex-1 sm:flex-initial truncate px-3 py-2 bg-white border border-green-200 text-green-800 rounded-full text-sm font-bold text-center"></span><button onclick="logout()" class="px-3 py-2.5 sm:py-2 bg-gray-100 rounded-full text-sm flex-shrink-0">Logout</button></div>
+      <button id="adminBtn" class="px-4 py-2.5 sm:py-2 bg-black text-white rounded-full text-sm font-bold flex-shrink-0">Admin</button>
+    </div>
+  </header>
+
+  <div id="adminBanner" class="hidden bg-red-600 text-white p-2.5 rounded-xl mb-4 text-center text-sm font-bold relative z-20">ADMIN MODE - <span id="pendingCount"></span> vendors pending</div>
+  <div id="statusMsg" class="hidden p-3 rounded-xl mb-4 text-sm text-center font-bold relative z-20"></div>
+  <div id="guestBanner" class="glass-card rounded-2xl p-4 mb-5 border-yellow-200 relative z-10"><div class="flex gap-3"><div class="text-2xl">🇨🇲</div><div><b>Welcome to CamairConnect MA!</b><p class="text-sm text-gray-600 mt-1">Events + Vendors. Vendors need admin approval. WhatsApp contact for hiring.</p></div></div></div>
+
+  <div class="glass-card rounded-2xl p-3 mb-4 relative z-30 shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+    <div class="flex gap-2 mb-3 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1 sm:mx-0 sm:px-0" id="zones" style="scroll-snap-type:x mandatory"></div>
+    <div class="flex gap-2 flex-col sm:flex-row sm:flex-wrap">
+      <div class="relative flex-1 w-full sm:min-w-[200px] order-1"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span><input id="search" placeholder="Search events, vendors..." class="w-full border bg-white p-3 sm:p-2.5 pl-9 pr-9 rounded-xl text-[15px] sm:text-sm" oninput="renderAll();renderVendors()"><button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 sm:w-6 sm:h-6 bg-gray-200 hover:bg-gray-300 rounded-full text-[12px] sm:text-[10px] flex items-center justify-center">✕</button></div>
+      <div class="flex gap-2 w-full sm:w-auto order-2">
+        <div class="relative z-40 flex-1 sm:flex-initial">
+          <button onclick="toggleVendorsDropdown()" class="w-full sm:w-auto bg-white border border-gray-200 px-4 sm:px-5 py-3 sm:py-2.5 rounded-xl font-bold shadow-sm text-sm flex items-center justify-center sm:justify-start gap-2 hover:shadow">🛒 Vendors <span class="text-[10px]">▼</span> <span id="vendorCountBadge" class="hidden bg-green-600 text-white text-[10px] px-2 py-0.5 rounded-full"></span></button>
+          <div id="vendorsDropdown" class="hidden absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-64 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-gray-100 z-[60] dropdown-menu overflow-hidden">
+          <div class="p-2">
+            <button onclick="setVendorFilter('All')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-50 flex justify-between"><span>All Vendors</span><span id="count-All" class="text-xs bg-gray-100 px-2 py-0.5 rounded-full"></span></button>
+            <div class="border-t my-1"></div>
+            <button onclick="setVendorFilter('Food/BBQ')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-gray-50 flex justify-between"><span>🍗 Food/BBQ</span><span id="count-Food/BBQ" class="text-xs bg-gray-100 px-2 py-0.5 rounded-full"></span></button>
+            <button onclick="setVendorFilter('Event Planner / Decor')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-gray-50 flex justify-between"><span>🎈 Event Planner / Decor</span><span id="count-Event Planner / Decor" class="text-xs bg-gray-100 px-2 py-0.5 rounded-full"></span></button>
+            <button onclick="setVendorFilter('DJs')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-gray-50 flex justify-between"><span>🎧 DJs</span><span id="count-DJs" class="text-xs bg-gray-100 px-2 py-0.5 rounded-full"></span></button>
+            <button onclick="setVendorFilter('MCs')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-gray-50 flex justify-between"><span>🎤 MCs</span><span id="count-MCs" class="text-xs bg-gray-100 px-2 py-0.5 rounded-full"></span></button>
+            <button onclick="setVendorFilter('Photographers')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-gray-50 flex justify-between"><span>📸 Photographers</span><span id="count-Photographers" class="text-xs bg-gray-100 px-2 py-0.5 rounded-full"></span></button>
+            <button onclick="setVendorFilter('Fashion / Makeup')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-gray-50 flex justify-between"><span>👗 Fashion / Makeup</span><span id="count-Fashion / Makeup" class="text-xs bg-gray-100 px-2 py-0.5 rounded-full"></span></button>
+            <button onclick="setVendorFilter('Hair styling / Barber')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-gray-50 flex justify-between"><span>💇 Hair styling / Barber</span><span id="count-Hair styling / Barber" class="text-xs bg-gray-100 px-2 py-0.5 rounded-full"></span></button>
+            <button onclick="setVendorFilter('Entertainment')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-gray-50 flex justify-between"><span>🎭 Entertainment</span><span id="count-Entertainment" class="text-xs bg-gray-100 px-2 py-0.5 rounded-full"></span></button>
+          </div>
+          <div class="bg-gray-50 p-2 border-t"><button onclick="openVendorPost()" class="w-full bg-gradient-to-r from-yellow-400 to-yellow-300 text-black py-2.5 rounded-xl text-sm font-black">+ Post Vendor Service</button></div>
+        </div>
+      </div>
+      <button onclick="openPost()" id="postBtn" class="flex-1 sm:flex-initial bg-gradient-to-r from-green-600 to-green-700 text-white px-4 sm:px-6 py-3 sm:py-2.5 rounded-xl font-bold shadow text-sm">+ Post Event</button>
+    </div>
+  </div>
+</div>
+
+  <div class="flex gap-2 mb-4 relative z-10 overflow-x-auto no-scrollbar pb-1" style="scroll-snap-type:x mandatory"><button id="tabEvents" onclick="setMainTab('events')" class="px-5 py-2.5 sm:py-2 rounded-full text-sm font-black bg-black text-white flex-shrink-0" style="scroll-snap-align:start">📅 Events</button><button id="tabVendors" onclick="setMainTab('vendors')" class="px-5 py-2.5 sm:py-2 rounded-full text-sm font-bold bg-white border flex-shrink-0" style="scroll-snap-align:start">🛒 Vendors <span id="tabVendorCount" class="text-xs bg-green-100 px-2 py-0.5 rounded-full"></span></button></div>
+
+  <div id="eventsView" class="relative z-10">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="w-7 h-7 rounded-full bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center shadow"><span class="text-yellow-300 text-[12px]">✦</span></div>
+      <h2 class="font-black text-gray-800 tracking-tight">Spotlight <span class="font-normal text-gray-500 text-sm ml-1">Most Attended</span></h2>
+      <div class="h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent ml-2"></div>
+      <span class="text-[10px] text-gray-400">Compact • Click to expand</span>
+    </div>
+    <div id="hottest" class="mb-6"></div>
+    <h2 class="font-black text-gray-800 mb-3 flex items-center gap-2">📅 All Events <span class="text-[11px] font-normal text-gray-500">includes Spotlight</span></h2>
+    <div id="events" class="grid md:grid-cols-2 gap-3"></div>
+  </div>
+  <div id="vendorsView" class="hidden relative z-10"><div class="flex justify-between items-center mb-3"><h2 class="font-black">🛒 Vendors <span id="vendorFilterLabel" class="text-sm bg-yellow-200 px-3 py-1 rounded-full"></span></h2><button onclick="openVendorPost()" class="bg-yellow-300 px-5 py-2 rounded-full text-sm font-black">+ Post Service</button></div><div id="vendors" class="grid md:grid-cols-2 gap-3"></div></div>
+</div>
+
+<div id="signupModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[70]"><div class="bg-white rounded-2xl p-6 w-full max-w-md"><h3 class="font-black text-xl mb-1">Create Account</h3><input id="suName" placeholder="Full Name" class="border w-full p-3 rounded-xl mb-3 text-sm"><input id="suEmail" placeholder="Email" class="border w-full p-3 rounded-xl mb-3 text-sm"><input id="suPass" placeholder="Password" type="password" class="border w-full p-3 rounded-xl mb-3 text-sm"><input id="suPass2" placeholder="Confirm" type="password" class="border w-full p-3 rounded-xl mb-4 text-sm"><p id="suErr" class="hidden text-red-600 text-sm bg-red-50 p-2 rounded-xl mb-3"></p><button onclick="doSignup()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold mb-3">Create</button><button onclick="closeSignup()" class="w-full bg-gray-100 py-3 rounded-xl text-sm">Cancel</button></div></div>
+<div id="loginModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[70]"><div class="bg-white rounded-2xl p-6 w-full max-w-md"><h3 class="font-black text-xl mb-1">Login</h3><input id="liEmail" placeholder="Email" class="border w-full p-3 rounded-xl mb-3 text-sm"><input id="liPass" placeholder="Password" type="password" class="border w-full p-3 rounded-xl mb-4 text-sm"><p id="liErr" class="hidden text-red-600 text-sm bg-red-50 p-2 rounded-xl mb-3"></p><button onclick="doLogin()" class="w-full bg-black text-white py-3 rounded-xl font-bold mb-3">Login</button><button onclick="closeLogin()" class="w-full bg-gray-100 py-3 rounded-xl text-sm">Cancel</button></div></div>
+<div id="postModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[70]"><div class="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"><h3 class="font-black text-lg mb-1">Post Event MA</h3><p id="autoZoneMsg" class="hidden text-xs bg-green-600 text-white px-3 py-1 rounded-full w-fit mb-3"></p><input id="pTitle" placeholder="Title" class="border w-full p-3 rounded-xl mb-2 text-sm" oninput="checkDuplication()"><div class="flex gap-2 mb-3"><input id="pCity" placeholder="City" class="border p-3 rounded-xl flex-1 text-sm" oninput="autoSelectZone();checkDuplication();checkDateConflicts()"><select id="pZone" class="border p-3 rounded-xl flex-1 text-sm bg-white"><option>Northshore</option><option>Southshore</option><option>Boston</option><option>Central</option><option>Western</option></select></div><div class="flex gap-2 mb-2"><input id="pDate" type="date" class="border p-3 rounded-xl flex-1 text-sm" onchange="checkDateConflicts();checkDuplication()"><select id="pCat" class="border p-3 rounded-xl flex-1 text-sm bg-white"><option>Party</option><option>Food</option><option>Church</option><option>Meeting</option><option>Business</option></select></div>
+<div id="duplicateWarn" class="hidden mb-3 p-3 rounded-xl bg-red-50 border border-red-200 text-[12px]"><p class="font-black text-red-700">⚠️ Possible Duplicate!</p><p id="duplicateText" class="text-red-600 mt-1"></p><div class="flex gap-2 mt-2"><button onclick="document.getElementById('duplicateWarn').classList.add('hidden')" class="text-[11px] bg-white border px-3 py-1 rounded-full">Dismiss</button><button onclick="closePost()" class="text-[11px] bg-red-600 text-white px-3 py-1 rounded-full">Cancel & View Event</button></div></div>
+<div id="dateConflictBox" class="hidden mb-3 p-3 rounded-xl bg-amber-50 border border-amber-200"><p class="font-black text-[12px] text-amber-800" id="dateConflictTitle">📅 Events on this date</p><div id="dateConflictList" class="mt-2 space-y-1.5 max-h-32 overflow-y-auto text-[11px]"></div><p class="text-[10px] text-gray-500 mt-2">Tip: Consider different date/time to avoid crowd split.</p></div>
+<input id="pFlyer" type="file" accept="image/*" class="mb-3 text-sm w-full"><textarea id="pDesc" placeholder="Description" class="border w-full p-3 rounded-xl mb-4 text-sm h-24"></textarea><div class="flex gap-2"><button onclick="closePost()" class="flex-1 bg-gray-100 py-3 rounded-xl text-sm">Cancel</button><button onclick="saveEvent()" class="flex-1 bg-green-600 text-white py-3 rounded-xl text-sm">Post</button></div><div id="editActions" class="hidden mt-4 border-t pt-4"><button onclick="delOwnPost()" class="w-full bg-red-50 text-red-600 border py-3 rounded-xl text-sm">Delete My Event</button></div></div></div>
+<div id="vendorPostModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[70]"><div class="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"><h3 class="font-black text-lg mb-1">Post Vendor MA</h3><p class="text-xs text-gray-500 mb-3">Requires admin approval</p><p id="autoZoneMsgV" class="hidden text-xs bg-green-600 text-white px-3 py-1 rounded-full w-fit mb-3"></p><input id="vBusiness" placeholder="Business Name" class="border w-full p-3 rounded-xl mb-3 text-sm"><div class="flex gap-2 mb-3"><input id="vCity" placeholder="City" class="border p-3 rounded-xl flex-1 text-sm" oninput="autoSelectZoneV()"><select id="vZone" class="border p-3 rounded-xl flex-1 text-sm bg-white"><option>Northshore</option><option>Southshore</option><option>Boston</option><option>Central</option><option>Western</option></select></div><select id="vCategory" class="border w-full p-3 rounded-xl mb-3 text-sm bg-white"><option>Food/BBQ</option><option>Event Planner / Decor</option><option>DJs</option><option>MCs</option><option>Photographers</option><option>Fashion / Makeup</option><option>Hair styling / Barber</option><option>Entertainment</option></select><input id="vWhatsapp" placeholder="WhatsApp +1 ..." class="border-2 border-green-200 w-full p-3 rounded-xl mb-3 text-sm"><input id="vPhone" placeholder="Phone optional" class="border w-full p-3 rounded-xl mb-3 text-sm"><input id="vFlyer" type="file" accept="image/*" class="mb-3 text-sm w-full"><textarea id="vDesc" placeholder="What do you offer?" class="border w-full p-3 rounded-xl mb-4 text-sm h-24"></textarea><div class="flex gap-2"><button onclick="closeVendorPost()" class="flex-1 bg-gray-100 py-3 rounded-xl text-sm">Cancel</button><button onclick="saveVendor()" class="flex-1 bg-yellow-300 text-black py-3 rounded-xl font-black text-sm">Post for Approval</button></div><div id="editVendorActions" class="hidden mt-4 border-t pt-4"><button onclick="delOwnVendor()" class="w-full bg-red-50 text-red-600 border py-3 rounded-xl text-sm">Delete My Vendor</button></div></div></div>
+<div id="adminModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[70]"><div class="bg-white rounded-2xl p-6 w-full max-w-sm"><h3 class="font-black mb-1">Admin</h3><input id="aEmail" placeholder="khumbahtung@gmail.com" class="border w-full p-3 rounded-xl mb-3 text-sm"><input id="aCode" type="password" placeholder="CamAir2026" class="border w-full p-3 rounded-xl mb-4 text-sm"><div class="flex gap-2"><button onclick="closeAdmin()" class="flex-1 bg-gray-100 py-3 rounded-xl text-sm">Cancel</button><button onclick="doAdminLogin()" class="flex-1 bg-black text-white py-3 rounded-xl text-sm">Login</button></div><p id="adminErr" class="hidden text-red-600 text-sm bg-red-50 p-2 rounded-xl mt-3"></p></div></div>
+<div id="lightbox" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[80]" onclick="closeLightbox()"><div class="relative max-w-3xl w-full"><img id="lightboxImg" src="" class="w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"><button onclick="closeLightbox()" class="absolute -top-10 right-0 text-white bg-white/20 hover:bg-white/30 w-10 h-10 rounded-full flex items-center justify-center">✕</button><p class="text-white/70 text-center text-sm mt-3">Tap outside to close • Flyer full view</p></div></div>
+
+<script>
+const SUPABASE_URL='https://oqjmkdzffjxlvchiotbh.supabase.co';
+const SUPABASE_KEY='sb_publishable_HuIDaHl3Ec0u6v5HtWUp3A_K363t69E';
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUser=null,currentProfile=null,isAdmin=localStorage.getItem('camair_isAdmin')==='true';
+let events=[],vendors=[],zoneFilter='All',mainTab='events',vendorFilter='All',editingId=null,editingVendorId=null;
+const cityToZone={'lowell':'Northshore','lawrence':'Northshore','lynn':'Northshore','salem':'Northshore','townsend':'Northshore','haverhill':'Northshore','beverly':'Northshore','peabody':'Northshore','methuen':'Northshore','chelmsford':'Northshore','tewksbury':'Northshore','dracut':'Northshore','andover':'Northshore','gloucester':'Northshore','brockton':'Southshore','randolph':'Southshore','quincy':'Southshore','dorchester':'Southshore','braintree':'Southshore','weymouth':'Southshore','stoughton':'Southshore','mattapan':'Southshore','hyde park':'Southshore','dedham':'Southshore','boston':'Boston','cambridge':'Boston','somerville':'Boston','malden':'Boston','everett':'Boston','revere':'Boston','medford':'Boston','arlington':'Boston','worcester':'Central','fitchburg':'Central','leominster':'Central','framingham':'Central','marlborough':'Central','shrewsbury':'Central','springfield':'Western','holyoke':'Western','chicopee':'Western','amherst':'Western','northampton':'Western'};
+function autoSelectZone(){const city=document.getElementById('pCity').value.trim().toLowerCase();const sel=document.getElementById('pZone'),msg=document.getElementById('autoZoneMsg');if(!city){msg.classList.add('hidden');return;}for(const[k,v]of Object.entries(cityToZone)){if(city.includes(k)){sel.value=v;msg.innerText=`✅ ${city} → ${v}`;msg.classList.remove('hidden');return;}}msg.classList.add('hidden');}
+function autoSelectZoneV(){const city=document.getElementById('vCity').value.trim().toLowerCase();const sel=document.getElementById('vZone'),msg=document.getElementById('autoZoneMsgV');if(!city){msg.classList.add('hidden');return;}for(const[k,v]of Object.entries(cityToZone)){if(city.includes(k)){sel.value=v;msg.innerText=`✅ ${city} → ${v}`;msg.classList.remove('hidden');return;}}msg.classList.add('hidden');}
+function showStatus(m,e=false){const el=document.getElementById('statusMsg');el.innerText=m;el.classList.remove('hidden');el.className='p-3 rounded-xl mb-4 text-sm text-center font-bold relative z-20 '+(e?'bg-red-50 text-red-700 border':'bg-green-50 text-green-700 border');setTimeout(()=>el.classList.add('hidden'),5000);}
+async function init(){const {data:{session}}=await supabaseClient.auth.getSession();if(session?.user){currentUser=session.user;const {data}=await supabaseClient.from('profiles').select('*').eq('id',currentUser.id).single();currentProfile=data;}if(isAdmin){document.getElementById('adminBanner').classList.remove('hidden');}updateAuthUI();await loadEvents();await loadVendors();}
+init();
+supabaseClient.auth.onAuthStateChange(async (ev,sess)=>{if(sess?.user){currentUser=sess.user;const {data}=await supabaseClient.from('profiles').select('*').eq('id',currentUser.id).single();currentProfile=data;}else{currentUser=null;currentProfile=null;}updateAuthUI();await loadEvents();await loadVendors();});
+function updateAuthUI(){const out=document.getElementById('loggedOutBtns'),inn=document.getElementById('loggedInBtns'),banner=document.getElementById('guestBanner'),btn=document.getElementById('postBtn');if(currentUser){out.classList.add('hidden');inn.classList.remove('hidden');inn.classList.add('flex');banner.classList.add('hidden');document.getElementById('userDisplay').innerHTML='👤 '+(currentProfile?.name||currentUser.email.split('@')[0]);btn.disabled=false;}else{out.classList.remove('hidden');inn.classList.add('hidden');banner.classList.remove('hidden');btn.disabled=true;}}
+function openSignup(){document.getElementById('signupModal').classList.remove('hidden');}function closeSignup(){document.getElementById('signupModal').classList.add('hidden');}
+function openLogin(){document.getElementById('loginModal').classList.remove('hidden');}function closeLogin(){document.getElementById('loginModal').classList.add('hidden');}
+function openPost(){if(!currentUser){openLogin();return;}editingId=null;document.getElementById('pTitle').value='';document.getElementById('pCity').value='';document.getElementById('pDate').value='';document.getElementById('pDesc').value='';document.getElementById('pFlyer').value='';document.getElementById('autoZoneMsg').classList.add('hidden');document.getElementById('editActions').classList.add('hidden');document.getElementById('duplicateWarn').classList.add('hidden');document.getElementById('dateConflictBox').classList.add('hidden');document.getElementById('postModal').classList.remove('hidden');}
+function closePost(){document.getElementById('postModal').classList.add('hidden');}
+function openVendorPost(){if(!currentUser){openLogin();return;}editingVendorId=null;document.getElementById('vBusiness').value='';document.getElementById('vCity').value='';document.getElementById('vWhatsapp').value='';document.getElementById('vPhone').value='';document.getElementById('vDesc').value='';document.getElementById('vFlyer').value='';document.getElementById('autoZoneMsgV').classList.add('hidden');document.getElementById('editVendorActions').classList.add('hidden');document.getElementById('vendorPostModal').classList.remove('hidden');closeVendorsDropdown();}
+function closeVendorPost(){document.getElementById('vendorPostModal').classList.add('hidden');}
+function openAdminModal(){document.getElementById('adminModal').classList.remove('hidden');}function closeAdmin(){document.getElementById('adminModal').classList.add('hidden');}
+document.getElementById('adminBtn').onclick=openAdminModal;
+function toggleVendorsDropdown(){document.getElementById('vendorsDropdown').classList.toggle('hidden');}function closeVendorsDropdown(){document.getElementById('vendorsDropdown').classList.add('hidden');}
+document.addEventListener('click',e=>{const btn=e.target.closest('[onclick="toggleVendorsDropdown()"]'),dd=document.getElementById('vendorsDropdown');if(!btn && !dd.contains(e.target))dd.classList.add('hidden');});
+function setMainTab(tab){mainTab=tab;document.getElementById('tabEvents').className=tab==='events'?'px-5 py-2.5 sm:py-2 rounded-full text-sm font-black bg-black text-white flex-shrink-0':'px-5 py-2.5 sm:py-2 rounded-full text-sm font-bold bg-white border flex-shrink-0';document.getElementById('tabVendors').className=tab==='vendors'?'px-5 py-2.5 sm:py-2 rounded-full text-sm font-black bg-black text-white flex-shrink-0':'px-5 py-2.5 sm:py-2 rounded-full text-sm font-bold bg-white border flex-shrink-0';document.getElementById('eventsView').classList.toggle('hidden',tab!=='events');document.getElementById('vendorsView').classList.toggle('hidden',tab!=='vendors');if(tab==='vendors')renderVendors();}
+function setVendorFilter(cat){vendorFilter=cat;setMainTab('vendors');document.getElementById('vendorFilterLabel').innerText=cat==='All'?'':cat;closeVendorsDropdown();renderVendors();}
+async function doSignup(){const name=document.getElementById('suName').value.trim(),email=document.getElementById('suEmail').value.trim().toLowerCase(),pass=document.getElementById('suPass').value,pass2=document.getElementById('suPass2').value,err=document.getElementById('suErr');if(!name||!email||!pass){err.innerText='All required';err.classList.remove('hidden');return;}if(pass.length<6){err.innerText='Min 6';err.classList.remove('hidden');return;}if(pass!==pass2){err.innerText='No match';err.classList.remove('hidden');return;}err.classList.add('hidden');const {data,error}=await supabaseClient.auth.signUp({email,password:pass});if(error){err.innerText=error.message;err.classList.remove('hidden');return;}if(data.user){await supabaseClient.from('profiles').insert({id:data.user.id,name});showStatus('Created! Login');closeSignup();openLogin();}}
+async function doLogin(){const email=document.getElementById('liEmail').value.trim().toLowerCase(),pass=document.getElementById('liPass').value,err=document.getElementById('liErr');const {data,error}=await supabaseClient.auth.signInWithPassword({email,password:pass});if(error){err.innerText=error.message;err.classList.remove('hidden');return;}err.classList.add('hidden');closeLogin();currentUser=data.user;const {data:prof}=await supabaseClient.from('profiles').select('*').eq('id',currentUser.id).single();currentProfile=prof;updateAuthUI();await loadEvents();await loadVendors();}
+async function logout(){await supabaseClient.auth.signOut();currentUser=null;currentProfile=null;isAdmin=false;localStorage.removeItem('camair_isAdmin');updateAuthUI();await loadEvents();await loadVendors();}
+function doAdminLogin(){const email=document.getElementById('aEmail').value.trim().toLowerCase(),code=document.getElementById('aCode').value;if(email==='khumbahtung@gmail.com'&&code==='CamAir2026'){isAdmin=true;localStorage.setItem('camair_isAdmin','true');closeAdmin();renderAll();renderVendors();document.getElementById('adminBanner').classList.remove('hidden');document.getElementById('adminBanner').classList.add('flex');showStatus('✅ Admin ON - You can now approve vendors & delete anything');}else{document.getElementById('adminErr').innerText='Denied - Use khumbahtung@gmail.com + CamAir2026';document.getElementById('adminErr').classList.remove('hidden');}}
+async function loadEvents(){
+  const {data,error}=await supabaseClient.from('events').select('*').order('created_at',{ascending:false});
+  if(error){document.getElementById('events').innerHTML=`<div class="glass-card p-6 text-center">Error ${error.message}</div>`;return;}
+  let raw=data||[];
+  const now=new Date(); now.setHours(0,0,0,0);
+  const toDelete=[];
+  raw.forEach(ev=>{
+    if(!ev.date) return;
+    const evDate=new Date(ev.date); evDate.setHours(0,0,0,0);
+    const diffDays=Math.floor((now-evDate)/(1000*60*60*24));
+    if(diffDays>90) toDelete.push(ev);
+  });
+  if(toDelete.length>0){
+    console.log(`Auto-deleting ${toDelete.length} events older than 90 days`);
+    for(const ev of toDelete){
+      supabaseClient.from('events').delete().eq('id',ev.id).then(r=>{ if(r.error) console.log('delete failed', r.error.message); });
+    }
+    raw=raw.filter(ev=>{
+      const evDate=new Date(ev.date); evDate.setHours(0,0,0,0);
+      const diff=Math.floor((now-evDate)/(1000*60*60*24));
+      return diff<=90;
+    });
+  }
+  events=raw;
+  renderAll();
+}
+async function loadVendors(){const {data,error}=await supabaseClient.from('vendors').select('*').order('created_at',{ascending:false});if(error){vendors=[];document.getElementById('vendors').innerHTML=`<div class="glass-card p-6 text-center">Run vendors SQL - vendors table not created yet</div>`;updateVendorCounts();return;}vendors=data||[];updateVendorCounts();renderVendors();const pending=vendors.filter(v=>!v.approved).length;if(isAdmin&&pending>0){document.getElementById('pendingCount').innerText=`${pending} pending`;document.getElementById('adminBanner').classList.remove('hidden');}else if(isAdmin){document.getElementById('pendingCount').innerText='All approved';document.getElementById('adminBanner').classList.remove('hidden');}}
+function updateVendorCounts(){const cats=['All','Food/BBQ','Event Planner / Decor','DJs','MCs','Photographers','Fashion / Makeup','Hair styling / Barber','Entertainment'];cats.forEach(cat=>{const el=document.getElementById('count-'+cat);if(!el)return;const count=cat==='All'?vendors.filter(v=>v.approved||isAdmin||(currentUser&&v.owner_id===currentUser.id)).length:vendors.filter(v=>v.category===cat&&(v.approved||isAdmin||(currentUser&&v.owner_id===currentUser.id))).length;el.innerText=count>0?count:'';el.className=count>0?'text-xs bg-gray-100 px-2 py-0.5 rounded-full':'hidden';});const total=vendors.filter(v=>v.approved).length;const badge=document.getElementById('vendorCountBadge');if(total>0){badge.innerText=total;badge.classList.remove('hidden');}else badge.classList.add('hidden');document.getElementById('tabVendorCount').innerText=total>0?`(${total})`:'';}
+
+// DUPLICATION + DATE CONFLICT
+function norm(s){return (s||'').toLowerCase().trim().replace(/\s+/g,' ');}
+function findDuplicate(title,city,date,excludeId){
+  const nt=norm(title), nc=norm(city);
+  if(!nt || !date) return null;
+  return events.find(ev=>{
+    if(excludeId && ev.id===excludeId) return false;
+    const sameDate = ev.date===date;
+    const sameTitle = norm(ev.title)===nt || norm(ev.title).includes(nt) || nt.includes(norm(ev.title));
+    const sameCity = nc && norm(ev.city)===nc;
+    return sameDate && sameTitle && (sameCity || norm(ev.title).length>4);
+  });
+}
+function checkDuplication(){
+  const title=document.getElementById('pTitle').value.trim();
+  const city=document.getElementById('pCity').value.trim();
+  const date=document.getElementById('pDate').value;
+  const warn=document.getElementById('duplicateWarn');
+  const txt=document.getElementById('duplicateText');
+  const dup=findDuplicate(title,city,date,editingId);
+  if(dup){txt.innerHTML=`<b>${dup.title}</b> already exists on <b>${dup.date}</b> in ${dup.city} by ${dup.owner_name||'someone'}.`;warn.classList.remove('hidden');return dup;} else {warn.classList.add('hidden');return null;}
+}
+function checkDateConflicts(){
+  const date=document.getElementById('pDate').value;
+  const city=document.getElementById('pCity').value.trim();
+  const box=document.getElementById('dateConflictBox');
+  const list=document.getElementById('dateConflictList');
+  const titleEl=document.getElementById('dateConflictTitle');
+  if(!date){box.classList.add('hidden');return [];}
+  const sameDay=events.filter(ev=>ev.date===date && ev.id!==editingId);
+  if(sameDay.length===0){
+    titleEl.innerHTML=`✅ No events on ${date} - Great date!`;
+    list.innerHTML=`<p class="text-green-700">You're first! This date is free.</p>`;
+    box.classList.remove('hidden');box.className='mb-3 p-3 rounded-xl bg-green-50 border border-green-200';return [];
+  }
+  const sameCity=sameDay.filter(ev=>city && norm(ev.city)===norm(city));
+  box.className='mb-3 p-3 rounded-xl bg-amber-50 border border-amber-200';
+  titleEl.innerHTML=`📅 ${sameDay.length} event(s) on ${date} ${sameCity.length?`⚠️ ${sameCity.length} same city`:''}`;
+  list.innerHTML=sameDay.map(ev=>{const hl=city && norm(ev.city)===norm(city)?'bg-red-50 border-red-200':'bg-white border-gray-100';return `<div class="flex justify-between items-center p-2 rounded-lg border ${hl}"><div><b>${ev.title}</b> <span class="text-gray-500">• ${ev.city} • ${ev.attendees?.length||0} I Dey Go</span></div><div class="text-[10px] ${sameCity.includes(ev)?'text-red-600 font-bold':''}">${sameCity.includes(ev)?'SAME CITY!':''}</div></div>`}).join('');box.classList.remove('hidden');return sameDay;
+}
+async function saveEvent(){try{if(!currentUser){openLogin();return;}const title=document.getElementById('pTitle').value.trim(),city=document.getElementById('pCity').value.trim(),zone=document.getElementById('pZone').value,date=document.getElementById('pDate').value,cat=document.getElementById('pCat').value,desc=document.getElementById('pDesc').value;if(!title||!city||!date){alert('Title, City, Date required');return;}
+const dup=findDuplicate(title,city,date,editingId);if(dup){if(!confirm(`Possible duplicate:\n"${dup.title}" on ${dup.date} in ${dup.city}\n\nYou: "${title}" on ${date} in ${city}\n\nContinue?`)) return;}
+const conflicts=events.filter(ev=>ev.date===date && ev.id!==editingId);if(conflicts.length>0 && !editingId){const sameCityConf=conflicts.filter(ev=>norm(ev.city)===norm(city));if(sameCityConf.length>0){if(!confirm(`${conflicts.length} event(s) already on ${date}, ${sameCityConf.length} in same city (${city}). Split crowd? Post anyway?`)) return;}}
+let flyer='';const f=document.getElementById('pFlyer');if(f.files[0]){flyer=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=e=>res(e.target.result);fr.onerror=rej;fr.readAsDataURL(f.files[0]);});}const payload={title,city,zone,date,category:cat,description:desc,flyer,owner_name:currentProfile?.name||currentUser.email.split('@')[0],owner_email:currentUser.email,owner_id:currentUser.id,attendees:[],comments:[]};let result;if(editingId)result=await supabaseClient.from('events').update(payload).eq('id',editingId).select();else result=await supabaseClient.from('events').insert(payload).select();if(result.error){showStatus(result.error.message,true);return;}closePost();showStatus(conflicts.length?`Posted! Note: ${conflicts.length} other same day`:'Posted');await loadEvents();}catch(e){showStatus(e.message,true);}}
+
+function setupZones(){const zones=['All','Northshore','Southshore','Boston','Central','Western'];document.getElementById('zones').innerHTML=zones.map(z=>`<button onclick="setZone('${z}')" class="px-4 py-2 sm:py-2 rounded-full text-[13px] sm:text-sm font-bold whitespace-nowrap flex-shrink-0 ${zoneFilter===z?'bg-black text-white shadow':'bg-white border hover:bg-gray-50'}" style="scroll-snap-align:start">${z}</button>`).join('');}
+function setZone(z){zoneFilter=z;setupZones();renderAll();renderVendors();}
+function getHottest(){if(events.length===0)return null;return [...events].sort((a,b)=>(b.attendees?.length||0)-(a.attendees?.length||0))[0];}
+function clearSearch(){document.getElementById('search').value='';document.getElementById('clearSearchBtn').classList.add('hidden');vendorFilter='All';document.getElementById('vendorFilterLabel').innerText='';zoneFilter='All';setupZones();renderAll();renderVendors();showStatus('Filters cleared');}
+
+// COMPACT + EXPAND LOGIC - NEW
+let expandedCards=new Set();
+function toggleExpand(id){
+  const full=document.getElementById(`full-${id}`);
+  const chev=document.getElementById(`chev-${id}`);
+  if(!full) return;
+  if(full.classList.contains('hidden')){
+    full.classList.remove('hidden');
+    full.classList.add('expand-anim');
+    expandedCards.add(id);
+    if(chev) chev.innerText='▲ Collapse';
+  } else {
+    full.classList.add('hidden');
+    expandedCards.delete(id);
+    if(chev) chev.innerText='▼ Expand';
+  }
+}
+
+function getDaysPast(dateStr){
+  if(!dateStr) return 0;
+  const now=new Date(); now.setHours(0,0,0,0);
+  const d=new Date(dateStr); d.setHours(0,0,0,0);
+  return Math.floor((now-d)/(1000*60*60*24));
+}
+function renderAll(){
+  setupZones();
+  const searchEl=document.getElementById('search');
+  const search=searchEl.value.toLowerCase();
+  const clearBtn=document.getElementById('clearSearchBtn');
+  if(search) clearBtn.classList.remove('hidden'); else clearBtn.classList.add('hidden');
+  let filtered=events.filter(ev=>{
+    if(zoneFilter!=='All'&&ev.zone!==zoneFilter) return false;
+    if(search&&!(ev.title.toLowerCase().includes(search)||ev.city.toLowerCase().includes(search)||(ev.description||'').toLowerCase().includes(search))) return false;
+    const daysPast=getDaysPast(ev.date);
+    if(daysPast>30) return false;
+    return true;
+  });
+  const eligibleForSpotlight=events.filter(ev=>getDaysPast(ev.date)<=30);
+  const hottest=eligibleForSpotlight.length? [...eligibleForSpotlight].sort((a,b)=>(b.attendees?.length||0)-(a.attendees?.length||0))[0] : null;
+  document.getElementById('hottest').innerHTML=hottest?card(hottest,true):'<div class="glass-card p-6 text-center text-sm">No spotlight yet - be first to get I Dey Go!</div>';
+  const hiddenCount=events.length-filtered.length;
+  document.getElementById('events').innerHTML=filtered.map(ev=>card(ev,false)).join('')||`<div class="glass-card p-8 text-center"><p>No events for ${zoneFilter} ${search?`matching "${search}"`:''}</p>${hiddenCount?`<p class="text-xs text-gray-400 mt-2">${hiddenCount} past events hidden (older than 30 days, auto-deleted after 90 days)</p>`:''}<button onclick="clearSearch()" class="mt-3 bg-black text-white px-4 py-2 rounded-full text-sm">Clear Search</button></div>`;
+  if(hiddenCount>0 && filtered.length>0){
+    document.getElementById('events').innerHTML+=`<div class="glass-card p-3 text-center text-[11px] text-gray-500 mt-3">ℹ️ ${hiddenCount} past event(s) older than 30 days hidden • Deleted from DB after 90 days</div>`;
+  }
+}
+function openLightbox(src){document.getElementById('lightboxImg').src=src;document.getElementById('lightbox').classList.remove('hidden');document.body.style.overflow='hidden';}
+function closeLightbox(){document.getElementById('lightbox').classList.add('hidden');document.getElementById('lightboxImg').src='';document.body.style.overflow='';}
+
+function card(ev,isHottest){
+  const isPast=new Date(ev.date)<new Date(new Date().setHours(0,0,0,0));
+  const hasGone=currentUser&&ev.attendees?.includes(currentUser.email);
+  const isOwner=currentUser&&(currentUser.id===ev.owner_id||currentUser.email===ev.owner_email);
+  const canEdit=isOwner||isAdmin;
+  const needsLogin=!currentUser;
+  const isExpanded=expandedCards.has(ev.id);
+  const shortDesc=(ev.description||'').length>70 ? (ev.description||'').slice(0,68)+'...' : (ev.description||'');
+  const compactH = isHottest ? 'compact-img h-[105px] sm:h-[125px]' : 'compact-img h-[88px] sm:h-[105px]';
+  const ring = isHottest ? 'ring-2 ring-slate-800 ring-offset-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)]' : '';
+  return `<div class="glass-card rounded-2xl overflow-hidden ${isPast?'opacity-75':''} ${ring} flex flex-col">
+  ${isHottest?`<div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white text-[10px] font-black px-3 py-1.5 tracking-[0.14em] flex items-center justify-between"><span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-gradient-to-br from-yellow-300 to-amber-400 flex items-center justify-center text-slate-900 text-[9px]">✦</span> SPOTLIGHT • ${ev.attendees?.length||0} I DEY GO</span><span class="text-[9px] opacity-70">TOP EVENT</span></div>`:''}
+  <!-- COMPACT VIEW - 1/4 HEIGHT -->
+  <div class="flex gap-2 p-2.5 cursor-pointer hover:bg-white/50 transition" onclick="toggleExpand('${ev.id}')">
+    <div class="w-[86px] sm:w-[110px] flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 relative">
+      ${ev.flyer?`<img src="${ev.flyer}" class="w-full ${compactH} object-cover">`:`<div class="${compactH} bg-gradient-to-br from-green-600 via-yellow-300 to-red-600 flex items-center justify-center text-white font-black text-[9px]">${ev.category||'MA'}</div>`}
+      <div class="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-full">tap</div>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex justify-between gap-1">
+        <h3 class="font-black text-[13px] sm:text-[14px] leading-tight line-clamp-1 flex-1">${ev.title}</h3>
+        <span class="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded-full flex-shrink-0 h-fit">${ev.attendees?.length||0} 👥</span>
+      </div>
+      <p class="text-[11px] font-black text-black uppercase truncate mt-0.5 tracking-wide">📍 ${ev.city} • <span class="bg-black text-white px-1.5 py-0.5 rounded-full text-[10px]">${ev.zone}</span></p>
+      <p class="text-[11px] font-bold text-green-700 mt-0.5">📅 ${ev.date} • ${ev.category||''}</p>
+      <p class="text-[11px] text-gray-700 mt-1 line-clamp-1 leading-snug">${shortDesc||'No description'}</p>
+      <div class="flex items-center gap-1.5 mt-1.5">
+        <span class="text-[10px] bg-white border px-2 py-0.5 rounded-full">💬 ${ev.comments?.length||0}</span>
+        <span class="text-[9px] text-gray-400">By ${ev.owner_name||'Community'}</span>
+        <span id="chev-${ev.id}" class="ml-auto text-[10px] font-bold text-black bg-yellow-200 px-2 py-0.5 rounded-full">${isExpanded?'▲ Collapse':'▼ Expand'}</span>
+      </div>
+    </div>
+  </div>
+  <!-- FULL EXPANDED VIEW -->
+  <div id="full-${ev.id}" class="${isExpanded?'':'hidden'} border-t bg-white/70">
+    ${ev.flyer?`<div class="relative bg-gray-50 group cursor-pointer" onclick="openLightbox('${ev.flyer.replace(/'/g,"\\'")}')"><img src="${ev.flyer}" class="w-full max-h-[420px] sm:max-h-[480px] object-contain mx-auto"><div class="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full">🔍 Tap to expand</div></div>`:''}
+    <div class="p-4">
+      <div class="flex justify-between gap-2">
+        <h3 class="font-black text-[16px]">${ev.title}</h3>
+        <div class="flex gap-1 flex-shrink-0">${canEdit?`<button onclick="event.stopPropagation();editEv('${ev.id}')" class="w-8 h-8 bg-white border rounded-full text-xs">✏️</button>`:''}${canEdit?`<button onclick="event.stopPropagation();delEv('${ev.id}')" class="w-8 h-8 bg-red-50 border rounded-full text-xs">🗑️</button>`:''}</div>
+      </div>
+      <div class="flex flex-wrap gap-2 mt-2">
+        <span class="text-[13px] font-black bg-black text-white px-3 py-1 rounded-full tracking-wide">📍 ${ev.city}</span>
+        <span class="text-[13px] font-black bg-gray-100 border-2 border-black px-3 py-1 rounded-full">${ev.zone}</span>
+        <span class="text-[13px] font-black bg-green-600 text-white px-3 py-1 rounded-full">📅 ${ev.date}</span>
+        <span class="text-[12px] font-bold bg-yellow-200 px-3 py-1 rounded-full">${ev.category}</span>
+      </div>
+      <p class="text-sm mt-3 whitespace-pre-wrap">${ev.description||''}</p>
+      <p class="text-[11px] text-gray-400 mt-3">By ${ev.owner_name||'Community'} • ${ev.owner_email||''}</p>
+      <div class="flex gap-2 mt-4">
+        ${isPast?'<span class="text-xs bg-gray-100 px-4 py-2.5 rounded-full">Past Event</span>':`${needsLogin?`<button onclick="openLogin()" class="flex-1 text-sm px-4 py-3 rounded-full bg-white border font-bold">🔒 I Dey Go (${ev.attendees?.length||0})</button>`:`<button onclick="toggleGo('${ev.id}')" class="flex-1 text-sm px-4 py-3 rounded-full font-bold ${hasGone?'bg-green-600 text-white':'bg-white border'}">${hasGone?'✅ I Dey Go':'I Dey Go'} (${ev.attendees?.length||0})</button>`}`} 
+        <button onclick="toggleComments('${ev.id}')" class="px-4 py-3 bg-white border rounded-full text-sm font-bold">💬 ${ev.comments?.length||0}</button>
+      </div>
+      <div id="c-${ev.id}" class="hidden mt-4 border-t pt-4">
+        <div class="space-y-3 mb-3 max-h-80 overflow-y-auto">${(ev.comments||[]).map((c,idx)=>`<div class="bg-gray-50 rounded-2xl p-3"><div class="flex justify-between gap-2"><p class="text-sm flex-1 break-words"><b>${c.name}:</b> ${c.text} ${c.isHost?'<span class="ml-2 text-[10px] bg-black text-white px-2 py-0.5 rounded-full">HOST</span>':''}</p>${canEdit||isOwner?`<button onclick="openReplyBox('${ev.id}',${idx})" class="text-[11px] bg-white border px-2 py-1 rounded-full flex-shrink-0">↩️ Reply</button>`:''}</div>${(c.replies||[]).length?`<div class="mt-2 ml-4 space-y-2 border-l-2 border-green-200 pl-3">${c.replies.map(r=>`<div class="bg-white rounded-xl p-2 border"><p class="text-[13px] break-words"><b>${r.name}:</b> ${r.text}</p></div>`).join('')}</div>`:''}<div id="reply-${ev.id}-${idx}" class="hidden mt-2 flex gap-2"><input id="ri-${ev.id}-${idx}" placeholder="Reply..." class="border flex-1 p-2.5 rounded-full text-[13px] min-w-0"><button onclick="addReply('${ev.id}',${idx})" class="bg-green-600 text-white px-4 rounded-full text-xs flex-shrink-0">Reply</button></div></div>`).join('')||'No comments'}</div>
+        ${needsLogin?`<p class="text-sm">🔒 <button onclick="openLogin()" class="text-green-600 font-bold">Login</button></p>`:`<div class="flex gap-2"><input id="ci-${ev.id}" placeholder="Comment..." class="border flex-1 p-3 rounded-full text-[15px] min-w-0"><button onclick="addComment('${ev.id}')" class="bg-black text-white px-5 py-3 rounded-full text-sm font-bold">Post</button></div>`}
+      </div>
+    </div>
+  </div>
+</div>`;}
+
+async function toggleGo(id){if(!currentUser){openLogin();return;}const ev=events.find(e=>e.id===id);const has=ev.attendees.includes(currentUser.email);const newAtt=has?ev.attendees.filter(x=>x!==currentUser.email):[...ev.attendees,currentUser.email];const {error}=await supabaseClient.from('events').update({attendees:newAtt}).eq('id',id);if(error){showStatus(error.message,true);return;}await loadEvents();}
+async function editEv(id){const ev=events.find(e=>e.id===id);if(!ev)return;const isOwner=currentUser&&(currentUser.id===ev.owner_id||currentUser.email===ev.owner_email);if(!isOwner&&!isAdmin){showStatus('Only owner',true);return;}editingId=id;document.getElementById('pTitle').value=ev.title;document.getElementById('pCity').value=ev.city;document.getElementById('pZone').value=ev.zone;document.getElementById('pDate').value=ev.date;document.getElementById('pCat').value=ev.category||'Party';document.getElementById('pDesc').value=ev.description||'';document.getElementById('editActions').classList.remove('hidden');document.getElementById('duplicateWarn').classList.add('hidden');document.getElementById('dateConflictBox').classList.add('hidden');document.getElementById('postModal').classList.remove('hidden');setTimeout(()=>{checkDateConflicts();},100);}
+async function delEv(id){const ev=events.find(e=>e.id===id);if(!ev)return;const isOwner=currentUser&&(currentUser.id===ev.owner_id||currentUser.email===ev.owner_email);if(!isOwner&&!isAdmin){showStatus('Only owner',true);return;}if(!confirm('Delete?'))return;const {error}=await supabaseClient.from('events').delete().eq('id',id);if(error){showStatus(error.message,true);return;}showStatus('Deleted');await loadEvents();}
+function delOwnPost(){if(!editingId)return;delEv(editingId);closePost();}
+function toggleComments(id){document.getElementById('c-'+id).classList.toggle('hidden');}
+async function addComment(id){if(!currentUser){openLogin();return;}const input=document.getElementById('ci-'+id);const text=input.value.trim();if(!text)return;const ev=events.find(e=>e.id===id);const isOwnerComment=currentUser.id===ev.owner_id||currentUser.email===ev.owner_email;const newCom=[...(ev.comments||[]),{name:currentProfile?.name||currentUser.email.split('@')[0],text,isHost:isOwnerComment,replies:[],created:Date.now()}];const {error}=await supabaseClient.from('events').update({comments:newCom}).eq('id',id);if(error){showStatus(error.message,true);return;}await loadEvents();setTimeout(()=>{document.getElementById('c-'+id).classList.remove('hidden');expandedCards.add(id);},200);}
+function openReplyBox(a,b){const box=document.getElementById(`reply-${a}-${b}`);if(!box)return;box.classList.toggle('hidden');}
+async function addReply(a,b){if(!currentUser){openLogin();return;}const input=document.getElementById(`ri-${a}-${b}`);const text=input.value.trim();if(!text)return;const ev=events.find(e=>e.id===a);const isOwner=currentUser.id===ev.owner_id||currentUser.email===ev.owner_email||isAdmin;if(!isOwner){showStatus('Only host',true);return;}const updated=JSON.parse(JSON.stringify(ev.comments||[]));if(!updated[b].replies)updated[b].replies=[];updated[b].replies.push({name:currentProfile?.name||currentUser.email.split('@')[0],text,isHost:true,created:Date.now()});const {error}=await supabaseClient.from('events').update({comments:updated}).eq('id',a);if(error){showStatus(error.message,true);return;}showStatus('Reply posted');await loadEvents();}
+
+function cleanWhatsapp(num){return num.replace(/[^0-9]/g,'');}
+async function saveVendor(){try{if(!currentUser){openLogin();return;}const business=document.getElementById('vBusiness').value.trim(),city=document.getElementById('vCity').value.trim(),zone=document.getElementById('vZone').value,category=document.getElementById('vCategory').value,whatsappRaw=document.getElementById('vWhatsapp').value.trim(),phone=document.getElementById('vPhone').value.trim(),desc=document.getElementById('vDesc').value.trim();if(!business||!city||!whatsappRaw){alert('Business, city, WhatsApp required');return;}const whatsapp=cleanWhatsapp(whatsappRaw);if(whatsapp.length<10){alert('Valid WhatsApp');return;}let flyer='';const f=document.getElementById('vFlyer');if(f.files[0]){flyer=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=e=>res(e.target.result);fr.onerror=rej;fr.readAsDataURL(f.files[0]);});}const payload={business_name:business,city,zone,category,description:desc,whatsapp:whatsappRaw,whatsapp_clean:whatsapp,phone,flyer,owner_name:currentProfile?.name||currentUser.email.split('@')[0],owner_email:currentUser.email,owner_id:currentUser.id,approved:false,approved_at:null};let result;if(editingVendorId)result=await supabaseClient.from('vendors').update(payload).eq('id',editingVendorId).select();else result=await supabaseClient.from('vendors').insert(payload).select();if(result.error){showStatus(result.error.message,true);return;}closeVendorPost();showStatus('Vendor submitted - pending approval');await loadVendors();setMainTab('vendors');}catch(e){showStatus(e.message,true);}}
+function renderVendors(){
+  const search=document.getElementById('search').value.toLowerCase();
+  let filtered=vendors.filter(v=>{
+    const canSee=v.approved||(currentUser&&(currentUser.id===v.owner_id||currentUser.email===v.owner_email))||isAdmin;
+    if(!canSee)return false;
+    if(zoneFilter!=='All'&&v.zone!==zoneFilter) return false;
+    if(vendorFilter!=='All'&&v.category!==vendorFilter) return false;
+    if(search&&!((v.business_name||'').toLowerCase().includes(search)||(v.city||'').toLowerCase().includes(search)||(v.category||'').toLowerCase().includes(search)||(v.description||'').toLowerCase().includes(search)||(v.owner_email||'').toLowerCase().includes(search)||(v.owner_name||'').toLowerCase().includes(search)))return false;
+    return true;
+  });
+  filtered.sort((a,b)=>{
+    const aExp=isVendorExpired(a)?1:0;
+    const bExp=isVendorExpired(b)?1:0;
+    if(aExp!==bExp) return aExp-bExp;
+    return 0;
+  });
+  const container=document.getElementById('vendors');
+  const expiredCount=filtered.filter(v=>isVendorExpired(v)).length;
+  if(filtered.length===0){
+    const searchTxt=document.getElementById('search').value;
+    container.innerHTML=`<div class="glass-card p-8 text-center col-span-2"><p class="font-bold">No vendors ${vendorFilter!=='All'?`for ${vendorFilter}`:''} ${zoneFilter!=='All'?`in ${zoneFilter}`:''}</p>${searchTxt?`<p class="text-sm text-gray-500 mt-2">Search "${searchTxt}" filtered everything out</p>`:''}<p class="text-xs text-gray-400 mt-2">Total: ${vendors.length} | Approved: ${vendors.filter(v=>v.approved).length} | Expired: ${vendors.filter(v=>isVendorExpired(v)).length} | Pending: ${vendors.filter(v=>!v.approved).length} ${isAdmin?'| Admin sees all':''}</p><div class="flex gap-2 justify-center mt-4 flex-wrap"><button onclick="clearSearch()" class="bg-black text-white px-5 py-2 rounded-full text-sm">Clear</button><button onclick="openVendorPost()" class="bg-yellow-300 px-5 py-2 rounded-full text-sm font-black">+ Post Vendor</button></div></div>`;
+    return;
+  }
+  container.innerHTML=filtered.map(v=>vendorCard(v)).join('') + (expiredCount?`<div class="col-span-2 glass-card p-3 text-center text-[11px] text-gray-500">⚠️ ${expiredCount} vendor(s) expired after 30 days - grayed out, needs reapproval</div>`:'');
+}
+function vendorCard(v){const isOwner=currentUser&&(currentUser.id===v.owner_id||currentUser.email===v.owner_email);const canEdit=isOwner||isAdmin;const whatsappClean=v.whatsapp_clean||cleanWhatsapp(v.whatsapp||'');const waLink=`https://wa.me/${whatsappClean}?text=${encodeURIComponent(`Hi ${v.business_name}, I found you on CamairConnect MA (${v.category})`)}`;const pendingBadge=!v.approved?'<span class="bg-yellow-400 text-black text-[10px] font-black px-2.5 py-1 rounded-full">⏳ PENDING</span>':'<span class="bg-green-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full">✅ APPROVED</span>';return `<div class="glass-card rounded-2xl overflow-hidden ${!v.approved?'ring-2 ring-yellow-300':''}">${v.flyer?`<div class="relative bg-gray-50 group cursor-pointer" onclick="openLightbox('${v.flyer.replace(/'/g,"\\'")}')"><img src="${v.flyer}" class="w-full max-h-[180px] sm:max-h-[220px] object-cover mx-auto"><div class="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full">🔍 Tap</div></div>`:`<div class="h-16 bg-gradient-to-br from-yellow-300 via-green-600 to-red-600"><div class="p-2 text-white font-black text-xs">${v.category} • MA</div></div>`}<div class="p-3 sm:p-4"><div class="flex justify-between gap-2"><div class="min-w-0 flex-1"><h3 class="font-black text-[13px] sm:text-sm truncate">${v.business_name}</h3><p class="text-[10px] text-gray-400 uppercase truncate">${v.city} • ${v.zone} • ${v.category}</p></div><div class="flex-shrink-0">${pendingBadge}</div></div><p class="text-[12px] text-gray-700 mt-2 line-clamp-2">${v.description||''}</p><div class="flex gap-2 mt-3 flex-wrap"><a href="${waLink}" target="_blank" class="flex-1 min-w-[90px] bg-green-500 text-white px-3 py-2.5 rounded-full text-[12px] font-black text-center">💬 WhatsApp</a>${canEdit?`<button onclick="editVendor('${v.id}')" class="w-8 h-8 bg-white border rounded-full text-xs">✏️</button>`:''}${canEdit?`<button onclick="delVendor('${v.id}')" class="w-8 h-8 bg-red-50 border rounded-full text-xs">🗑️</button>`:''}${isAdmin&&!v.approved?`<button onclick="approveVendor('${v.id}')" class="px-2 py-2 bg-black text-white rounded-full text-[10px] font-black">✅ Approve</button>`:''}${isAdmin&&v.approved?`<button onclick="unapproveVendor('${v.id}')" class="px-2 py-2 bg-yellow-100 border rounded-full text-[10px]">⏸️</button>`:''}</div></div></div>`;}
+async function editVendor(id){const v=vendors.find(x=>x.id===id);if(!v)return;const isOwner=currentUser&&(currentUser.id===v.owner_id||currentUser.email===v.owner_email);if(!isOwner&&!isAdmin){showStatus('Only owner',true);return;}editingVendorId=id;document.getElementById('vBusiness').value=v.business_name||'';document.getElementById('vCity').value=v.city||'';document.getElementById('vZone').value=v.zone||'Northshore';document.getElementById('vCategory').value=v.category||'Food/BBQ';document.getElementById('vWhatsapp').value=v.whatsapp||'';document.getElementById('vPhone').value=v.phone||'';document.getElementById('vDesc').value=v.description||'';document.getElementById('editVendorActions').classList.remove('hidden');document.getElementById('vendorPostModal').classList.remove('hidden');}
+async function delVendor(id){const v=vendors.find(x=>x.id===id);if(!v)return;const isOwner=currentUser&&(currentUser.id===v.owner_id||currentUser.email===v.owner_email);if(!isOwner&&!isAdmin){showStatus('Only owner/admin',true);return;}if(!confirm('Delete vendor?'))return;const {error}=await supabaseClient.from('vendors').delete().eq('id',id);if(error){showStatus(error.message,true);return;}showStatus('Deleted');await loadVendors();}
+function delOwnVendor(){if(!editingVendorId)return;delVendor(editingVendorId);closeVendorPost();}
+async function approveVendor(id){if(!isAdmin){showStatus('Admin only',true);return;}const {error}=await supabaseClient.from('vendors').update({approved:true,approved_at:new Date().toISOString()}).eq('id',id);if(error){showStatus(error.message,true);return;}showStatus('✅ Approved - Reapproval needed after 30 days');await loadVendors();}
+async function unapproveVendor(id){if(!isAdmin){showStatus('Admin only',true);return;}const {error}=await supabaseClient.from('vendors').update({approved:false,approved_at:null}).eq('id',id);if(error){showStatus(error.message,true);return;}showStatus('Unapproved');await loadVendors();}
+function getVendorDaysApproved(v){
+  const baseDate=v.approved_at||v.created_at;
+  if(!baseDate) return 0;
+  const now=new Date(); now.setHours(0,0,0,0);
+  const d=new Date(baseDate); d.setHours(0,0,0,0);
+  return Math.floor((now-d)/(1000*60*60*24));
+}
+function isVendorExpired(v){
+  if(!v.approved) return false;
+  return getVendorDaysApproved(v)>30;
+}
+</script>
+</body>
+</html>
